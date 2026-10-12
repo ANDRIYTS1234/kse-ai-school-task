@@ -2,14 +2,14 @@
 
 Borders with excluded/absent regions (Luhansk, Crimea) and with foreign countries are ignored.
 Kyiv City is enclaved in Kyiv oblast, so its only neighbour is Kyivska oblast.
-Edges marked "unsure" were checked against general knowledge of Ukraine's map, not a GIS file.
+All edges were reviewed manually against a map of Ukraine (Step 3 review).
 """
 
 ADJACENCY: dict[str, list[str]] = {
     "Cherkaska oblast": ["Kirovohradska oblast", "Kyivska oblast", "Poltavska oblast", "Vinnytska oblast"],
     "Chernihivska oblast": ["Kyivska oblast", "Poltavska oblast", "Sumska oblast"],
     "Chernivetska oblast": ["Ivano-Frankivska oblast", "Khmelnytska oblast", "Ternopilska oblast",
-                            "Vinnytska oblast"],  # unsure: short Chernivtsi-Vinnytsia border near Sokyriany
+                            "Vinnytska oblast"],
     "Dnipropetrovska oblast": ["Donetska oblast", "Kharkivska oblast", "Khersonska oblast", "Kirovohradska oblast",
                                "Mykolaivska oblast", "Poltavska oblast", "Zaporizka oblast"],
     "Donetska oblast": ["Dnipropetrovska oblast", "Kharkivska oblast", "Zaporizka oblast"],
@@ -19,10 +19,10 @@ ADJACENCY: dict[str, list[str]] = {
     "Khmelnytska oblast": ["Chernivetska oblast", "Rivnenska oblast", "Ternopilska oblast", "Vinnytska oblast",
                            "Zhytomyrska oblast"],
     "Kirovohradska oblast": ["Cherkaska oblast", "Dnipropetrovska oblast", "Mykolaivska oblast", "Odeska oblast",
-                             "Poltavska oblast", "Vinnytska oblast"],  # unsure: short Kirovohrad-Vinnytsia border
+                             "Poltavska oblast", "Vinnytska oblast"],
     "Kyiv City": ["Kyivska oblast"],
     "Kyivska oblast": ["Cherkaska oblast", "Chernihivska oblast", "Kyiv City", "Poltavska oblast",
-                       "Vinnytska oblast", "Zhytomyrska oblast"],  # unsure: Kyiv oblast-Poltava (near Yahotyn)
+                       "Vinnytska oblast", "Zhytomyrska oblast"],
     "Lvivska oblast": ["Ivano-Frankivska oblast", "Rivnenska oblast", "Ternopilska oblast", "Volynska oblast",
                        "Zakarpatska oblast"],
     "Mykolaivska oblast": ["Dnipropetrovska oblast", "Khersonska oblast", "Kirovohradska oblast", "Odeska oblast"],

@@ -1,0 +1,105 @@
+development rows: 952,872 (2022-03-04 17:00:00+00:00 .. 2026-09-13 23:00:00+00:00)
+
+== Step 5 baselines, onset log loss per fold (B_hist window = W_RECENT)
+fold           fold_1  fold_2  fold_3  fold_4
+model                                        
+B_daily        3.5692  3.2450  3.7961  4.4064
+B_hist         0.3773  0.3570  0.4299  0.4780
+B_hist_recent  0.4180  0.3820  0.4954  0.5571
+B_persist      3.2592  3.0428  3.4703  4.0974
+B_recent7d     0.3945  0.3664  0.4242  0.4736
+B_weekly       3.6859  3.5248  3.7729  4.5521
+                        onset_log_loss_mean  onset_log_loss_std  onset_pr_auc_mean  onset_pr_auc_std  onset_roc_auc_mean  onset_roc_auc_std  onset_brier_mean  onset_brier_std  onset_mean_p_mean  onset_mean_p_std  onset_base_rate_mean  onset_base_rate_std
+model         window                                                                                                                                                                                                                                          
+B_hist        W_RECENT               0.4106              0.0545             0.4633            0.0204              0.7935             0.0301            0.1328           0.0177             0.1593            0.0016                0.1973               0.0254
+B_recent7d    W_RECENT               0.4147              0.0458             0.4666            0.0355              0.8014             0.0251            0.1354           0.0164             0.2633            0.0333                0.1973               0.0254
+B_hist_recent W_RECENT               0.4631              0.0785             0.4623            0.0224              0.7917             0.0266            0.1320           0.0162             0.1807            0.0093                0.1973               0.0254
+B_persist     W_RECENT               3.4674              0.4548             0.2582            0.0260              0.6032             0.0214            0.2510           0.0329             0.1973            0.0254                0.1973               0.0254
+B_daily       W_RECENT               3.7542              0.4901             0.2743            0.0169              0.6332             0.0197            0.2717           0.0355             0.2625            0.0331                0.1973               0.0254
+B_weekly      W_RECENT               3.8839              0.4571             0.2605            0.0193              0.6161             0.0150            0.2811           0.0331             0.2600            0.0349                0.1973               0.0254
+  stage1 LR(C=0.01): 1.5 s/fit, log loss 0.3891
+  stage1 LR(C=0.1): 1.3 s/fit, log loss 0.3893
+  stage1 LR(C=1.0): 1.4 s/fit, log loss 0.3896
+  stage1 LGBM(leaves=15,lr=0.05,mcs=100): 9.2 s/fit, log loss 0.3871
+  stage1 LGBM(leaves=15,lr=0.05,mcs=1000): 4.8 s/fit, log loss 0.3868
+  stage1 LGBM(leaves=15,lr=0.1,mcs=100): 2.5 s/fit, log loss 0.3870
+  stage1 LGBM(leaves=15,lr=0.1,mcs=1000): 2.7 s/fit, log loss 0.3872
+  stage1 LGBM(leaves=63,lr=0.05,mcs=100): 3.9 s/fit, log loss 0.3869
+  stage1 LGBM(leaves=63,lr=0.05,mcs=1000): 6.3 s/fit, log loss 0.3870
+  stage1 LGBM(leaves=63,lr=0.1,mcs=100): 3.0 s/fit, log loss 0.3872
+  stage1 LGBM(leaves=63,lr=0.1,mcs=1000): 2.2 s/fit, log loss 0.3874
+
+== Stage 1: hyper-parameters on W_RECENT
+                                           onset_log_loss_mean  onset_log_loss_std  onset_pr_auc_mean  onset_pr_auc_std  onset_roc_auc_mean  onset_roc_auc_std  onset_brier_mean  onset_brier_std  onset_mean_p_mean  onset_mean_p_std  onset_base_rate_mean  onset_base_rate_std
+model                            window                                                                                                                                                                                                                                          
+LGBM(leaves=15,lr=0.05,mcs=1000) W_RECENT               0.3868              0.0423             0.5014            0.0240              0.8124             0.0253            0.1259           0.0147             0.1857            0.0196                0.1973               0.0254
+LGBM(leaves=63,lr=0.05,mcs=100)  W_RECENT               0.3869              0.0428             0.5008            0.0214              0.8123             0.0254            0.1259           0.0148             0.1855            0.0188                0.1973               0.0254
+LGBM(leaves=63,lr=0.05,mcs=1000) W_RECENT               0.3870              0.0424             0.5019            0.0246              0.8121             0.0255            0.1259           0.0147             0.1859            0.0192                0.1973               0.0254
+LGBM(leaves=15,lr=0.1,mcs=100)   W_RECENT               0.3870              0.0424             0.5001            0.0235              0.8125             0.0247            0.1260           0.0146             0.1849            0.0180                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=100)  W_RECENT               0.3871              0.0428             0.4996            0.0225              0.8121             0.0254            0.1260           0.0147             0.1859            0.0190                0.1973               0.0254
+LGBM(leaves=63,lr=0.1,mcs=100)   W_RECENT               0.3872              0.0424             0.5008            0.0210              0.8118             0.0250            0.1260           0.0148             0.1859            0.0195                0.1973               0.0254
+LGBM(leaves=15,lr=0.1,mcs=1000)  W_RECENT               0.3872              0.0424             0.5024            0.0236              0.8119             0.0248            0.1260           0.0146             0.1855            0.0191                0.1973               0.0254
+LGBM(leaves=63,lr=0.1,mcs=1000)  W_RECENT               0.3874              0.0417             0.5024            0.0246              0.8118             0.0244            0.1259           0.0145             0.1867            0.0195                0.1973               0.0254
+LR(C=0.01)                       W_RECENT               0.3891              0.0418             0.4932            0.0269              0.8105             0.0244            0.1265           0.0146             0.1901            0.0225                0.1973               0.0254
+LR(C=0.1)                        W_RECENT               0.3893              0.0425             0.4930            0.0250              0.8101             0.0247            0.1266           0.0148             0.1865            0.0199                0.1973               0.0254
+LR(C=1.0)                        W_RECENT               0.3896              0.0427             0.4923            0.0247              0.8097             0.0249            0.1267           0.0148             0.1856            0.0194                0.1973               0.0254
+best hyper-parameters: {'LR': 'LR(C=0.01)', 'LGBM': 'LGBM(leaves=15,lr=0.05,mcs=1000)'}
+  stage2 LR(C=0.01) [W_FULL]: 5.4 s/fit, log loss 0.3935
+  stage2 LR(C=0.01) [W_2025]: 2.8 s/fit, log loss 0.3910
+  stage2 LR(C=0.01) [W_RECENT]: 1.3 s/fit, log loss 0.3891
+  stage2 LGBM(leaves=15,lr=0.05,mcs=1000) [W_FULL]: 71.0 s/fit, log loss 0.3889
+  stage2 LGBM(leaves=15,lr=0.05,mcs=1000) [W_2025]: 18.0 s/fit, log loss 0.3871
+  stage2 LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]: 7.2 s/fit, log loss 0.3868
+
+== Stage 2: training windows (best hyper-parameters)
+                                           onset_log_loss_mean  onset_log_loss_std  onset_pr_auc_mean  onset_pr_auc_std  onset_roc_auc_mean  onset_roc_auc_std  onset_brier_mean  onset_brier_std  onset_mean_p_mean  onset_mean_p_std  onset_base_rate_mean  onset_base_rate_std
+model                            window                                                                                                                                                                                                                                          
+LGBM(leaves=15,lr=0.05,mcs=1000) W_RECENT               0.3868              0.0423             0.5014            0.0240              0.8124             0.0253            0.1259           0.0147             0.1857            0.0196                0.1973               0.0254
+                                 W_2025                 0.3871              0.0428             0.5020            0.0225              0.8128             0.0261            0.1259           0.0148             0.1838            0.0221                0.1973               0.0254
+                                 W_FULL                 0.3889              0.0426             0.4996            0.0249              0.8109             0.0260            0.1264           0.0147             0.1795            0.0219                0.1973               0.0254
+LR(C=0.01)                       W_RECENT               0.3891              0.0418             0.4932            0.0269              0.8105             0.0244            0.1265           0.0146             0.1901            0.0225                0.1973               0.0254
+                                 W_2025                 0.3910              0.0426             0.4897            0.0268              0.8094             0.0246            0.1271           0.0149             0.1865            0.0246                0.1973               0.0254
+                                 W_FULL                 0.3935              0.0430             0.4895            0.0257              0.8077             0.0246            0.1277           0.0149             0.1783            0.0228                0.1973               0.0254
+B_hist                           W_RECENT               0.4106              0.0545             0.4633            0.0204              0.7935             0.0301            0.1328           0.0177             0.1593            0.0016                0.1973               0.0254
+                                 W_2025                 0.4304              0.0590             0.4420            0.0226              0.7796             0.0295            0.1389           0.0189             0.1353            0.0011                0.1973               0.0254
+                                 W_FULL                 0.4603              0.0606             0.4208            0.0224              0.7643             0.0227            0.1475           0.0197             0.1118            0.0005                0.1973               0.0254
+
+per-fold onset log loss:
+fold                                       fold_1  fold_2  fold_3  fold_4
+model                            window                                  
+B_hist                           W_2025    0.3943  0.3712  0.4549  0.5013
+                                 W_FULL    0.4217  0.3991  0.4901  0.5301
+                                 W_RECENT  0.3773  0.3570  0.4299  0.4780
+LGBM(leaves=15,lr=0.05,mcs=1000) W_2025    0.3636  0.3430  0.4020  0.4397
+                                 W_FULL    0.3658  0.3449  0.4036  0.4413
+                                 W_RECENT  0.3635  0.3432  0.4017  0.4389
+LR(C=0.01)                       W_2025    0.3663  0.3477  0.4070  0.4430
+                                 W_FULL    0.3679  0.3497  0.4116  0.4449
+                                 W_RECENT  0.3661  0.3463  0.4034  0.4407
+paired check LR: W_RECENT vs W_FULL: {'mean_diff': np.float64(-0.004414618644063464), 'std_diff': np.float64(0.002681437856302988), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+paired check LR: W_RECENT vs W_2025: {'mean_diff': np.float64(-0.001881211171982547), 'std_diff': np.float64(0.001373125105404077), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+paired check LGBM: W_RECENT vs W_FULL: {'mean_diff': np.float64(-0.0020943155156698673), 'std_diff': np.float64(0.00034562561186578033), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+paired check LGBM: W_RECENT vs W_2025: {'mean_diff': np.float64(-0.00027422811670417546), 'std_diff': np.float64(0.00042642896544453813), 'a_wins': 3, 'folds': 4, 'within_noise': True}
+paired check best LGBM vs best LR: {'mean_diff': np.float64(-0.0022942437554464568), 'std_diff': np.float64(0.0006146887100860828), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+chosen: ('LGBM(leaves=15,lr=0.05,mcs=1000)', 'W_RECENT')
+
+== Calibration-in-the-large per fold (onset)
+  fold  mean_p  observed                                             model
+fold_1  0.1799    0.1802                         LR: LR(C=0.01) [W_RECENT]
+fold_2  0.1697    0.1717                         LR: LR(C=0.01) [W_RECENT]
+fold_3  0.1891    0.2123                         LR: LR(C=0.01) [W_RECENT]
+fold_4  0.2216    0.2249                         LR: LR(C=0.01) [W_RECENT]
+fold_1  0.1739    0.1802 LGBM: LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_2  0.1714    0.1717 LGBM: LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_3  0.1833    0.2123 LGBM: LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_4  0.2141    0.2249 LGBM: LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+
+== Ablation (mean over folds; d = dropped - full; folds_worse = folds where dropping hurt log loss)
+                    onset_log_loss  onset_pr_auc  d_log_loss  d_pr_auc  folds_worse
+dropped                                                                            
+none                        0.3868        0.5014      0.0000    0.0000          NaN
+neighbour                   0.3889        0.4971      0.0021   -0.0043          4.0
+national                    0.3866        0.5032     -0.0003    0.0018          3.0
+neighbour+national          0.3905        0.4911      0.0037   -0.0103          4.0
+calendar                    0.3888        0.4931      0.0020   -0.0083          4.0
+saved C:\Users\andri\kse-ai-school-task\reports\selected_config.json | total 720 s

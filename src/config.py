@@ -71,3 +71,19 @@ TRAIN_WINDOWS: dict[str, pd.Timestamp | None] = {
     "W_2025": pd.Timestamp("2025-01-01", tz="UTC"),
     "W_RECENT": pd.Timestamp("2025-11-01", tz="UTC"),  # after the Volyn/Lviv regime change
 }
+
+# --- Models (Steps 5-6). Models are trained on onset rows only; continuation rows get p = 1 by rule.
+MODELS_DIR: Path = ROOT_DIR / "models"
+REPORTS_DIR: Path = ROOT_DIR / "reports"
+SEED: int = 42
+DEFAULT_WINDOW: str = "W_RECENT"
+HIST_RECENT_WEEKS: int = 4
+EARLY_STOPPING_WEEKS: int = 2
+
+FEATURE_GROUPS: dict[str, list[str]] = {
+    "neighbour": ["n_neighbours_active_now", "share_neighbours_active_now", "n_neighbour_onsets_last_hour"],
+    "national": ["n_regions_active_now", "n_regions_alert_last_hour", "national_roll_24h"],
+    "calendar": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "hour", "dow"],
+}
+# Constant (0) on onset rows by construction -> useless for onset models.
+ONSET_CONSTANT_FEATURES: list[str] = ["active_now", "current_alert_age_min"]

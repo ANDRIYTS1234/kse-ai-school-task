@@ -1,0 +1,20 @@
+{
+  "model": "LGBM(leaves=15,lr=0.05,mcs=1000)",
+  "window": "W_RECENT",
+  "best_lr": [
+    "LR(C=0.01)",
+    "W_RECENT"
+  ],
+  "best_lgbm": [
+    "LGBM(leaves=15,lr=0.05,mcs=1000)",
+    "W_RECENT"
+  ],
+  "paired_check_lgbm_vs_lr": {
+    "mean_diff": -0.0022942437554464568,
+    "std_diff": 0.0006146887100860828,
+    "a_wins": 4,
+    "folds": 4,
+    "within_noise": false
+  },
+  "search": "staged: hparams on W_RECENT -> windows -> ablation"
+}
