@@ -67,6 +67,8 @@ def clean_alerts(
 def _merge_intervals(alerts: pd.DataFrame) -> pd.DataFrame:
     """Union of overlapping/touching intervals within each region."""
     a = alerts.sort_values(["region", "start"]).reset_index(drop=True)
+    if a.empty:
+        return a[["region", "start", "end"]]
     prev_end = a.groupby("region")["end"].transform(lambda s: s.cummax().shift())
     new_block = prev_end.isna() | (a["start"] > prev_end)
     block = new_block.cumsum()
