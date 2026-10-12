@@ -10,11 +10,22 @@
     "W_RECENT"
   ],
   "paired_check_lgbm_vs_lr": {
-    "mean_diff": -0.0022942437554464568,
-    "std_diff": 0.0006146887100860828,
+    "mean_diff": -0.002828859264103853,
+    "std_diff": 0.0014151648910764273,
     "a_wins": 4,
     "folds": 4,
     "within_noise": false
   },
-  "search": "staged: hparams on W_RECENT -> windows -> ablation"
+  "search": "staged: hparams on W_RECENT -> windows -> ablation; stage 2b without national + Platt check",
+  "dropped_feature_groups": [
+    "national"
+  ],
+  "platt_check": {
+    "mean_diff": -0.00011282507769873329,
+    "std_diff": 0.00043880719281239934,
+    "a_wins": 2,
+    "folds": 4,
+    "within_noise": true
+  },
+  "platt_adopted": false
 }

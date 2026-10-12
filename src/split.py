@@ -5,12 +5,13 @@ always in the same set.
 """
 import inspect
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
 from src.config import N_VAL_FOLDS, TEST_END, TEST_START, TRAIN_WINDOWS, VAL_FOLD_LENGTH, VAL_GAP
 
-FINAL_EVALUATION_MODULES = ("src.evaluate",)
+FINAL_EVALUATION_FILE = Path(__file__).resolve().parent / "evaluate.py"
 
 
 class HoldoutAccessError(RuntimeError):
@@ -40,9 +41,10 @@ def development_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 def final_test_rows(df: pd.DataFrame) -> pd.DataFrame:
     """Holdout rows [TEST_START, TEST_END). Only callable from the final-evaluation module."""
-    caller = inspect.stack()[1].frame.f_globals.get("__name__", "")
-    if caller not in FINAL_EVALUATION_MODULES:
-        raise HoldoutAccessError(f"final_test_rows() called from '{caller}'; only {FINAL_EVALUATION_MODULES} may read the test period")
+    # Checked by file, not module name: `python -m src.evaluate` runs it as __main__.
+    caller = Path(inspect.stack()[1].filename).resolve()
+    if caller != FINAL_EVALUATION_FILE:
+        raise HoldoutAccessError(f"final_test_rows() called from '{caller.name}'; only src/evaluate.py may read the test period")
     return df[(df["t"] >= TEST_START) & (df["t"] < TEST_END)]
 
 

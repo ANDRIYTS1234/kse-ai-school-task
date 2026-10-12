@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src.config import DEFAULT_WINDOW, FEATURES_PATH, FIGURES_DIR, REPORTS_DIR, TRAIN_WINDOWS
+from src.config import DEFAULT_DROP_GROUPS, DEFAULT_WINDOW, FEATURES_PATH, FIGURES_DIR, REPORTS_DIR, TRAIN_WINDOWS
 from src.metrics import metrics_by_regime
 from src.models import HistRateBaseline, LGBMModel, LogisticModel, OnsetModel, hybrid_predict, make_baselines
 from src.split import development_rows, fold_frames, walk_forward_folds
@@ -178,15 +178,80 @@ def main() -> None:
     print("saved", REPORTS_DIR / "selected_config.json", f"| total {time.perf_counter() - t_start:.0f} s")
 
 
-def _factory(model_name: str, drop_groups: tuple[str, ...] = ()) -> Callable[[], OnsetModel]:
-    """Rebuild a model from its display name, e.g. 'LR(C=0.1)' or 'LGBM(leaves=15,lr=0.03,mcs=100)'."""
-    inner = model_name[model_name.index("(") + 1:-1]
-    kv = dict(item.split("=") for item in inner.split(","))
-    if model_name.startswith("LR"):
-        return lambda: LogisticModel(C=float(kv["C"]), drop_groups=drop_groups)
+def _factory(model_name: str, drop_groups: tuple[str, ...] | None = None) -> Callable[[], OnsetModel]:
+    """Rebuild a model from its display name, e.g. 'LR(C=0.1)' or 'LGBM(leaves=15,lr=0.05,mcs=1000)+platt'.
+
+    drop_groups=None -> the shipped feature set (DEFAULT_DROP_GROUPS); () -> all feature groups.
+    """
+    groups = DEFAULT_DROP_GROUPS if drop_groups is None else drop_groups
+    calibrate = model_name.endswith("+platt")
+    base = model_name.removesuffix("+platt")
+    kv = dict(item.split("=") for item in base[base.index("(") + 1:-1].split(","))
+    if base.startswith("LR"):
+        return lambda: LogisticModel(C=float(kv["C"]), drop_groups=groups)
     return lambda: LGBMModel(num_leaves=int(kv["leaves"]), learning_rate=float(kv["lr"]),
-                             min_child_samples=int(kv["mcs"]), drop_groups=drop_groups)
+                             min_child_samples=int(kv["mcs"]), drop_groups=groups, calibrate=calibrate)
+
+
+def rerun_stage2() -> None:
+    """Step 6 review follow-up: re-run the window comparison without national features and test Platt scaling.
+
+    Hyper-parameters are taken from the previous stage-1 result (reports/selected_config.json).
+    Platt is adopted only if it improves onset log loss on >= 3/4 folds with a consistent paired difference.
+    """
+    prev = json.loads((REPORTS_DIR / "selected_config.json").read_text())
+    lgbm_name, lr_name = prev["best_lgbm"][0].removesuffix("+platt"), prev["best_lr"][0]
+    dev = development_rows(pd.read_parquet(FEATURES_PATH))
+    print(f"feature groups dropped: {DEFAULT_DROP_GROUPS}")
+    runs, preds = [], {}
+    for name in (lgbm_name, lgbm_name + "+platt", lr_name):
+        for window in TRAIN_WINDOWS:
+            r, pr = run_walk_forward(_factory(name), window, dev, keep_predictions=True)
+            runs.append(r)
+            preds[(r.model.iloc[0], window)] = pr
+            print(f"  {r.model.iloc[0]} [{window}]: {r.fit_seconds.mean():.1f} s/fit, log loss {r.onset_log_loss.mean():.4f}", flush=True)
+    per_fold = pd.concat(runs, ignore_index=True)
+    per_fold.to_csv(REPORTS_DIR / "step6_stage2b_no_national_per_fold.csv", index=False)
+    summary = summarise(per_fold)
+    summary.to_csv(REPORTS_DIR / "step6_stage2b_no_national_summary.csv")
+    print("\n== Stage 2b (no national features)")
+    print(summary.round(4).to_string())
+    print("\nper-fold onset log loss:")
+    print(per_fold.pivot_table(index=["model", "window"], columns="fold", values="onset_log_loss").round(4).to_string())
+
+    def best_window(name: str) -> tuple[str, str]:
+        s = summary.loc[[name]]
+        top = s.index[0]
+        for w in TRAIN_WINDOWS:  # prefer the smaller (more recent) window when within noise
+            if w != top[1] and paired_noise_check(per_fold, top, (name, w))["within_noise"] and w == "W_RECENT":
+                return (name, w)
+        return top
+
+    lgbm = best_window(lgbm_name)
+    lr = best_window(lr_name)
+    for w in TRAIN_WINDOWS:
+        if w != lgbm[1]:
+            print(f"paired LGBM {lgbm[1]} vs {w}:", paired_noise_check(per_fold, lgbm, (lgbm_name, w)))
+    platt = paired_noise_check(per_fold, (lgbm_name + "+platt", lgbm[1]), lgbm)
+    adopt = platt["a_wins"] >= 3 and platt["mean_diff"] < 0 and abs(platt["mean_diff"]) > platt["std_diff"]
+    print(f"Platt vs uncalibrated [{lgbm[1]}]:", platt, "-> adopt" if adopt else "-> do NOT adopt")
+    final = (lgbm_name + "+platt", lgbm[1]) if adopt else lgbm
+    print("paired final vs LR:", paired_noise_check(per_fold, final, lr))
+
+    cal_preds = pd.concat([preds[k].assign(model=f"{k[0]} [{k[1]}]") for k in
+                           [lr, lgbm, (lgbm_name + "+platt", lgbm[1])]], ignore_index=True)
+    cal = reliability_figure(cal_preds, FIGURES_DIR / "calibration_walkforward.png")
+    print("\n== Calibration-in-the-large per fold (onset)")
+    print(cal.round(4).to_string(index=False))
+
+    selected = {**prev, "model": final[0], "window": final[1], "best_lr": list(lr), "best_lgbm": list(final),
+                "dropped_feature_groups": list(DEFAULT_DROP_GROUPS), "platt_check": platt, "platt_adopted": bool(adopt),
+                "paired_check_lgbm_vs_lr": paired_noise_check(per_fold, final, lr),
+                "search": "staged: hparams on W_RECENT -> windows -> ablation; stage 2b without national + Platt check"}
+    (REPORTS_DIR / "selected_config.json").write_text(json.dumps(selected, indent=2, default=float))
+    print("saved", REPORTS_DIR / "selected_config.json")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    rerun_stage2() if "--stage2" in sys.argv else main()

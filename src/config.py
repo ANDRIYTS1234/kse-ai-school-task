@@ -87,3 +87,6 @@ FEATURE_GROUPS: dict[str, list[str]] = {
 }
 # Constant (0) on onset rows by construction -> useless for onset models.
 ONSET_CONSTANT_FEATURES: list[str] = ["active_now", "current_alert_age_min"]
+# Groups excluded from the shipped models (Step 6 ablation: national features added nothing, d log loss -0.0003).
+# Features are still computed so the ablation stays reproducible.
+DEFAULT_DROP_GROUPS: tuple[str, ...] = ("national",)

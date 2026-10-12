@@ -16,6 +16,7 @@ from src.config import (
     FEATURE_COLUMNS,
     FEATURE_GROUPS,
     HIST_RECENT_WEEKS,
+    DEFAULT_DROP_GROUPS,
     ONSET_CONSTANT_FEATURES,
     SEED,
 )
@@ -121,6 +122,11 @@ def lgbm_features(drop_groups: tuple[str, ...] = ()) -> list[str]:
 
 
 # ---------------------------------------------------------------- models
+def _logit(p: np.ndarray) -> np.ndarray:
+    p = np.clip(p, 1e-6, 1 - 1e-6)
+    return np.log(p / (1 - p))
+
+
 class LogisticModel(OnsetModel):
     """One-hot(region) + standardised numeric features -> logistic regression (no class weights).
 
@@ -128,7 +134,7 @@ class LogisticModel(OnsetModel):
     on W_FULL with identical validation log loss.
     """
 
-    def __init__(self, C: float = 0.1, drop_groups: tuple[str, ...] = ()):
+    def __init__(self, C: float = 0.1, drop_groups: tuple[str, ...] = DEFAULT_DROP_GROUPS):
         self.C, self.drop_groups = C, drop_groups
         self.name = f"LR(C={C})"
         self.categorical, self.numeric = lr_features(drop_groups)
@@ -154,14 +160,19 @@ class LGBMModel(OnsetModel):
 
     The validation fold is never used for early stopping. Refit with the found number of trees so
     the freshest training weeks (most relevant under non-stationarity) are not lost.
+
+    calibrate=True adds Platt scaling: a 1-D logistic regression on logit(p) fitted on the probe
+    model's predictions for the early-stopping slice (out-of-sample for the probe), then applied to
+    the refit model's output. Caveat: the refit model has seen that slice, so the mapping is
+    estimated on a slightly different model.
     """
 
     def __init__(self, num_leaves: int = 31, learning_rate: float = 0.05, min_child_samples: int = 100,
-                 drop_groups: tuple[str, ...] = ()):
+                 drop_groups: tuple[str, ...] = DEFAULT_DROP_GROUPS, calibrate: bool = False):
         self.params = dict(num_leaves=num_leaves, learning_rate=learning_rate, min_child_samples=min_child_samples)
-        self.drop_groups = drop_groups
+        self.drop_groups, self.calibrate = drop_groups, calibrate
         self.features = lgbm_features(drop_groups)
-        self.name = f"LGBM(leaves={num_leaves},lr={learning_rate},mcs={min_child_samples})"
+        self.name = f"LGBM(leaves={num_leaves},lr={learning_rate},mcs={min_child_samples})" + ("+platt" if calibrate else "")
 
     def _make(self, n_estimators: int) -> LGBMClassifier:
         return LGBMClassifier(n_estimators=n_estimators, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
@@ -174,11 +185,17 @@ class LGBMModel(OnsetModel):
         probe.fit(fit_part[self.features], fit_part["y"], eval_X=es_part[self.features], eval_y=es_part["y"],
                   eval_metric="binary_logloss", callbacks=[early_stopping(100, verbose=False)])
         self.best_iteration_ = max(int(probe.best_iteration_ or 1), 1)
+        if self.calibrate:
+            p_es = probe.predict_proba(es_part[self.features], num_iteration=self.best_iteration_)[:, 1]
+            self.platt_ = LogisticRegression(C=1e6).fit(_logit(p_es).reshape(-1, 1), es_part["y"])
         self.model_ = self._make(self.best_iteration_)
         self.model_.fit(train_onset[self.features], train_onset["y"])
 
     def predict_onset(self, df: pd.DataFrame) -> np.ndarray:
-        return self.model_.predict_proba(df[self.features])[:, 1]
+        p = self.model_.predict_proba(df[self.features])[:, 1]
+        if self.calibrate:
+            p = self.platt_.predict_proba(_logit(p).reshape(-1, 1))[:, 1]
+        return p
 
     def gain_importance(self) -> pd.Series:
         booster = self.model_.booster_

@@ -1,0 +1,56 @@
+feature groups dropped: ('national',)
+  LGBM(leaves=15,lr=0.05,mcs=1000) [W_FULL]: 27.8 s/fit, log loss 0.3908
+  LGBM(leaves=15,lr=0.05,mcs=1000) [W_2025]: 8.2 s/fit, log loss 0.3877
+  LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]: 3.1 s/fit, log loss 0.3866
+  LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_FULL]: 27.3 s/fit, log loss 0.3900
+  LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_2025]: 10.2 s/fit, log loss 0.3873
+  LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_RECENT]: 3.6 s/fit, log loss 0.3864
+  LR(C=0.01) [W_FULL]: 3.7 s/fit, log loss 0.3942
+  LR(C=0.01) [W_2025]: 1.2 s/fit, log loss 0.3917
+  LR(C=0.01) [W_RECENT]: 0.5 s/fit, log loss 0.3894
+
+== Stage 2b (no national features)
+                                                 onset_log_loss_mean  onset_log_loss_std  onset_pr_auc_mean  onset_pr_auc_std  onset_roc_auc_mean  onset_roc_auc_std  onset_brier_mean  onset_brier_std  onset_mean_p_mean  onset_mean_p_std  onset_base_rate_mean  onset_base_rate_std
+model                                  window                                                                                                                                                                                                                                          
+LGBM(leaves=15,lr=0.05,mcs=1000)+platt W_RECENT               0.3864              0.0427             0.5032            0.0265              0.8130             0.0258            0.1258           0.0150             0.1967            0.0296                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=1000)       W_RECENT               0.3866              0.0423             0.5032            0.0265              0.8130             0.0258            0.1257           0.0147             0.1849            0.0171                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=1000)+platt W_2025                 0.3873              0.0434             0.5020            0.0267              0.8122             0.0269            0.1260           0.0153             0.1979            0.0311                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=1000)       W_2025                 0.3877              0.0432             0.5020            0.0267              0.8122             0.0269            0.1259           0.0149             0.1823            0.0193                0.1973               0.0254
+LR(C=0.01)                             W_RECENT               0.3894              0.0420             0.4927            0.0269              0.8103             0.0245            0.1265           0.0147             0.1888            0.0210                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=1000)+platt W_FULL                 0.3900              0.0428             0.4974            0.0265              0.8088             0.0259            0.1268           0.0152             0.1990            0.0340                0.1973               0.0254
+LGBM(leaves=15,lr=0.05,mcs=1000)       W_FULL                 0.3908              0.0421             0.4974            0.0265              0.8088             0.0259            0.1269           0.0147             0.1790            0.0216                0.1973               0.0254
+LR(C=0.01)                             W_2025                 0.3917              0.0430             0.4885            0.0274              0.8090             0.0248            0.1273           0.0149             0.1827            0.0218                0.1973               0.0254
+                                       W_FULL                 0.3942              0.0435             0.4882            0.0261              0.8077             0.0249            0.1279           0.0150             0.1754            0.0212                0.1973               0.0254
+
+per-fold onset log loss:
+fold                                             fold_1  fold_2  fold_3  fold_4
+model                                  window                                  
+LGBM(leaves=15,lr=0.05,mcs=1000)       W_2025    0.3648  0.3427  0.4023  0.4409
+                                       W_FULL    0.3685  0.3461  0.4073  0.4413
+                                       W_RECENT  0.3639  0.3433  0.3992  0.4398
+LGBM(leaves=15,lr=0.05,mcs=1000)+platt W_2025    0.3645  0.3421  0.4020  0.4408
+                                       W_FULL    0.3674  0.3451  0.4054  0.4422
+                                       W_RECENT  0.3635  0.3427  0.3996  0.4399
+LR(C=0.01)                             W_2025    0.3666  0.3479  0.4084  0.4439
+                                       W_FULL    0.3680  0.3501  0.4128  0.4461
+                                       W_RECENT  0.3662  0.3463  0.4039  0.4412
+paired LGBM W_RECENT vs W_FULL: {'mean_diff': np.float64(-0.004245466245044141), 'std_diff': np.float64(0.0028675035731948856), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+paired LGBM W_RECENT vs W_2025: {'mean_diff': np.float64(-0.0011180174837095297), 'std_diff': np.float64(0.0015181501904290046), 'a_wins': 3, 'folds': 4, 'within_noise': True}
+Platt vs uncalibrated [W_RECENT]: {'mean_diff': np.float64(-0.00011282507769873329), 'std_diff': np.float64(0.00043880719281239934), 'a_wins': 2, 'folds': 4, 'within_noise': True} -> do NOT adopt
+paired final vs LR: {'mean_diff': np.float64(-0.002828859264103853), 'std_diff': np.float64(0.0014151648910764273), 'a_wins': 4, 'folds': 4, 'within_noise': False}
+
+== Calibration-in-the-large per fold (onset)
+  fold  mean_p  observed                                             model
+fold_1  0.1791    0.1802                             LR(C=0.01) [W_RECENT]
+fold_2  0.1699    0.1717                             LR(C=0.01) [W_RECENT]
+fold_3  0.1879    0.2123                             LR(C=0.01) [W_RECENT]
+fold_4  0.2184    0.2249                             LR(C=0.01) [W_RECENT]
+fold_1  0.1752    0.1802       LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_2  0.1713    0.1717       LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_3  0.1838    0.2123       LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_4  0.2093    0.2249       LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+fold_1  0.1849    0.1802 LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_RECENT]
+fold_2  0.1757    0.1717 LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_RECENT]
+fold_3  0.1855    0.2123 LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_RECENT]
+fold_4  0.2406    0.2249 LGBM(leaves=15,lr=0.05,mcs=1000)+platt [W_RECENT]
+saved C:\Users\andri\kse-ai-school-task\reports\selected_config.json
