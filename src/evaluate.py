@@ -207,7 +207,30 @@ def main() -> None:
     print("\n== Calibration-in-the-large per test week (onset)")
     print(cal.round(4).to_string(index=False))
     plot_timeline(test, preds[final_name], final_name)
+    post_hoc(test, preds, [final_name, lr_name, "B_hist", "B_recent7d"])
     print("saved tables to reports/ and figures to reports/figures/")
+
+
+def post_hoc(test: pd.DataFrame, preds: dict[str, np.ndarray], names: list[str]) -> None:
+    """POST-HOC analyses (not pre-registered; added after seeing test results; no model changes).
+
+    1. Within-region discrimination: per-region onset ROC-AUC for every model. The pooled AUC mixes
+       "which region is dangerous" with "which hour within a region"; this isolates the second.
+    2. The pre-registered naive/capped slice is degenerate on onset rows (the flags only exist for hours
+       with an alert, so y = 1 there). Instead compare mean p on POSITIVE onset rows: naive/capped vs clean.
+    """
+    onset = test["regime"] == "onset"
+    region = test["region"].astype(str)
+    auc = pd.DataFrame({n: onset_metrics_by(test, preds[n], region)["roc_auc"] for n in names})
+    auc.to_csv(REPORTS_DIR / "test_posthoc_within_region_auc.csv")
+    print("\n== POST-HOC 1: within-region onset ROC-AUC (median / mean over regions with both classes)")
+    print(pd.DataFrame({"median": auc.median(), "mean": auc.mean(), "regions > 0.6": (auc > 0.6).sum()}).round(4).to_string())
+    pos = onset & (test["y"] == 1)
+    flag = np.where(test["any_naive"] | test["any_capped"], "naive/capped", "clean")
+    mp = pd.DataFrame({n: pd.Series(preds[n][pos.to_numpy()]).groupby(flag[pos.to_numpy()]).mean() for n in names})
+    mp["n_positives"] = pd.Series(flag[pos.to_numpy()]).value_counts()
+    print("\n== POST-HOC 2: mean p on positive onset rows (higher = model saw it coming)")
+    print(mp.round(4).to_string())
 
 
 if __name__ == "__main__":

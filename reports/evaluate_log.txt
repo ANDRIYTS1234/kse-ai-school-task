@@ -1,0 +1,128 @@
+test: 2026-09-14 00:00:00+00:00 .. 2026-10-11 23:00:00+00:00 (16,128 rows; TEST_END 2026-10-12 00:00:00+00:00)
+
+== Main table (onset = primary; overall inflated by continuation rows)
+                                                   onset_roc_auc  onset_pr_auc  onset_brier  onset_log_loss  onset_base_rate  onset_mean_p  onset_n  overall_log_loss (inflated)  overall_pr_auc (inflated)  overall_roc_auc (inflated)  overall_brier (inflated)  continuation_mean_p  continuation_n
+model                                                                                                                                                                                                                                                                                                 
+B_persist                                                 0.5967        0.2998       0.2963          4.0936           0.2428        0.2424    14215                       3.6081                     0.4994                      0.7057                    0.2612                  1.0            1913
+B_daily                                                   0.6161        0.3096       0.3175          4.3862           0.2428        0.3112    14215                       3.8659                     0.4897                      0.7076                    0.2798                  1.0            1913
+B_weekly                                                  0.6079        0.3040       0.3180          4.3939           0.2428        0.3005    14215                       3.8728                     0.4869                      0.7035                    0.2803                  1.0            1913
+B_recent7d                                                0.7622        0.5028       0.1582          0.4783           0.2428        0.3085    14215                       0.4216                     0.7946                      0.8470                    0.1395                  1.0            1913
+B_hist                                                    0.7340        0.4816       0.1658          0.5181           0.2428        0.1654    14215                       0.4567                     0.7763                      0.8288                    0.1461                  1.0            1913
+LR [W_RECENT]                                             0.7691        0.5141       0.1522          0.4636           0.2428        0.2176    14215                       0.4086                     0.7997                      0.8515                    0.1341                  1.0            1913
+FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]         0.7717        0.5209       0.1515          0.4620           0.2428        0.2157    14215                       0.4072                     0.8016                      0.8531                    0.1336                  1.0            1913
+
+== Weekly onset log loss: final vs B_hist
+        FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]  B_hist  diff (a-b)
+week                                                                         
+1                                                  0.4374  0.4737     -0.0362
+2                                                  0.4624  0.5182     -0.0559
+3                                                  0.4396  0.4849     -0.0453
+4                                                  0.5094  0.5969     -0.0874
+mean                                               0.4622  0.5184     -0.0562
+a wins                                                NaN     NaN      4.0000
+
+== Weekly onset log loss: final vs B_recent7d
+        FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]  B_recent7d  diff (a-b)
+week                                                                             
+1                                                  0.4374      0.4526     -0.0151
+2                                                  0.4624      0.4819     -0.0196
+3                                                  0.4396      0.4624     -0.0227
+4                                                  0.5094      0.5169     -0.0075
+mean                                               0.4622      0.4785     -0.0162
+a wins                                                NaN         NaN      4.0000
+
+== Weekly onset log loss: final vs LR [W_RECENT]
+        FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]  LR [W_RECENT]  diff (a-b)
+week                                                                                
+1                                                  0.4374         0.4386     -0.0011
+2                                                  0.4624         0.4641     -0.0017
+3                                                  0.4396         0.4399     -0.0002
+4                                                  0.5094         0.5128     -0.0034
+mean                                               0.4622         0.4638     -0.0016
+a wins                                                NaN            NaN      4.0000
+
+== Per-region onset metrics (final model)
+                         roc_auc  pr_auc   brier  log_loss  base_rate  mean_p      n  B_hist_log_loss  B_recent7d_pr_auc
+Zakarpatska oblast           NaN     NaN  0.0001    0.0079     0.0000  0.0078  672.0           0.0109                NaN
+Ivano-Frankivska oblast   0.7388  0.0865  0.0130    0.0652     0.0135  0.0149  667.0           0.0727             0.0306
+Ternopilska oblast        0.8091  0.1437  0.0324    0.1329     0.0352  0.0255  654.0           0.1654             0.1169
+Chernivetska oblast       0.6459  0.0750  0.0456    0.1969     0.0473  0.0277  655.0           0.2203             0.0486
+Khmelnytska oblast        0.6681  0.1623  0.0817    0.3029     0.0906  0.0587  640.0           0.3709             0.1346
+Rivnenska oblast          0.5850  0.1730  0.1152    0.4021     0.1310  0.0866  626.0           0.5192             0.1613
+Donetska oblast           0.6735  0.2820  0.1289    0.4192     0.1613  0.1702  564.0           0.4237             0.1463
+Khersonska oblast         0.5333  0.1833  0.1416    0.4585     0.1625  0.2253  597.0           0.4692             0.1421
+Lvivska oblast            0.6124  0.2257  0.1370    0.4444     0.1659  0.1319  627.0           0.4607             0.1681
+Volynska oblast           0.5871  0.2781  0.1488    0.4739     0.1850  0.1597  573.0           0.4846             0.1903
+Vinnytska oblast          0.6368  0.2835  0.1531    0.4878     0.1893  0.1208  634.0           0.6432             0.1991
+Kyiv City                 0.4948  0.2056  0.1652    0.5188     0.2020  0.1529  604.0           0.5772             0.1893
+Cherkaska oblast          0.5221  0.2482  0.1838    0.5595     0.2346  0.1840  567.0           0.6080             0.2471
+Zhytomyrska oblast        0.5385  0.2991  0.1890    0.5760     0.2442  0.1764  602.0           0.7188             0.2367
+Zaporizka oblast          0.6231  0.3584  0.1811    0.5462     0.2496  0.2608  565.0           0.5376             0.2350
+Chernihivska oblast       0.5659  0.3000  0.1884    0.5642     0.2518  0.2793  560.0           0.5739             0.2478
+Poltavska oblast          0.5705  0.3746  0.2174    0.6260     0.3239  0.2897  565.0           0.6428             0.3335
+Kirovohradska oblast      0.5217  0.3401  0.2252    0.6450     0.3273  0.2688  553.0           0.7292             0.3053
+Odeska oblast             0.5383  0.3684  0.2233    0.6378     0.3367  0.3319  600.0           0.6641             0.3317
+Sumska oblast             0.5710  0.4170  0.2251    0.6417     0.3504  0.3713  548.0           0.6405             0.3485
+Kyivska oblast            0.5779  0.5797  0.2566    0.7083     0.5099  0.4119  557.0           1.0234             0.5064
+Mykolaivska oblast        0.5220  0.5609  0.2624    0.7188     0.5578  0.4518  536.0           0.8678             0.5674
+Kharkivska oblast         0.6024  0.7443  0.2229    0.6365     0.6607  0.6004  507.0           0.6526             0.6747
+Dnipropetrovska oblast    0.5764  0.7297  0.2170    0.6252     0.6827  0.6387  542.0           0.6785             0.6790
+
+== Onset metrics with / without Volynska + Lvivska
+                                                                        roc_auc  pr_auc   brier  log_loss  base_rate  mean_p        n
+FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT] | all regions          0.7717  0.5209  0.1515    0.4620     0.2428  0.2157  14215.0
+FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT] | without Volyn+Lviv   0.7791  0.5334  0.1524    0.4624     0.2490  0.2223  13015.0
+B_hist | all regions                                                     0.7340  0.4816  0.1658    0.5181     0.2428  0.1654  14215.0
+B_hist | without Volyn+Lviv                                              0.7414  0.4945  0.1676    0.5224     0.2490  0.1689  13015.0
+B_recent7d | all regions                                                 0.7622  0.5028  0.1582    0.4783     0.2428  0.3085  14215.0
+B_recent7d | without Volyn+Lviv                                          0.7714  0.5157  0.1588    0.4779     0.2490  0.3144  13015.0
+LR [W_RECENT] | all regions                                              0.7691  0.5141  0.1522    0.4636     0.2428  0.2176  14215.0
+LR [W_RECENT] | without Volyn+Lviv                                       0.7770  0.5265  0.1530    0.4638     0.2490  0.2246  13015.0
+
+== Error analysis (mass-attack hour: >= 10 regions with an onset; 27 such hours)
+                                                                    roc_auc  pr_auc   brier  log_loss  base_rate  mean_p        n
+model                                             slice                                                                          
+FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT] other hour         0.7745  0.5120  0.1467    0.4491     0.2325  0.2150  13618.0
+                                                  mass-attack hour   0.7575  0.7294  0.2629    0.7560     0.4774  0.2331    597.0
+                                                  clean              0.7929  0.5283  0.1388    0.4278     0.2240  0.2164  13872.0
+                                                  naive/capped          NaN     NaN  0.6682    1.8452     1.0000  0.1882    343.0
+B_hist                                            other hour         0.7377  0.4719  0.1596    0.4987     0.2325  0.1647  13618.0
+                                                  mass-attack hour   0.7045  0.6918  0.3082    0.9606     0.4774  0.1809    597.0
+                                                  clean              0.7509  0.4827  0.1519    0.4748     0.2240  0.1657  13872.0
+                                                  naive/capped          NaN     NaN  0.7300    2.2699     1.0000  0.1527    343.0
+B_recent7d                                        other hour         0.7653  0.4932  0.1553    0.4711     0.2325  0.3078  13618.0
+                                                  mass-attack hour   0.7484  0.7241  0.2243    0.6413     0.4774  0.3233    597.0
+                                                  clean              0.7838  0.5091  0.1493    0.4565     0.2240  0.3089  13872.0
+                                                  naive/capped          NaN     NaN  0.5178    1.3584     1.0000  0.2898    343.0
+
+== Calibration-in-the-large per test week (onset)
+ week  mean_p  observed                                             model
+    1  0.2027    0.2257 FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+    2  0.2254    0.2538 FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+    3  0.2107    0.2224 FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+    4  0.2244    0.2696 FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]
+    1  0.2025    0.2257                                     LR [W_RECENT]
+    2  0.2319    0.2538                                     LR [W_RECENT]
+    3  0.2113    0.2224                                     LR [W_RECENT]
+    4  0.2247    0.2696                                     LR [W_RECENT]
+    1  0.1652    0.2257                                            B_hist
+    2  0.1658    0.2538                                            B_hist
+    3  0.1650    0.2224                                            B_hist
+    4  0.1657    0.2696                                            B_hist
+    1  0.2885    0.2257                                        B_recent7d
+    2  0.3278    0.2538                                        B_recent7d
+    3  0.3052    0.2224                                        B_recent7d
+    4  0.3125    0.2696                                        B_recent7d
+
+== POST-HOC 1: within-region onset ROC-AUC (median / mean over regions with both classes)
+                                                   median    mean  regions > 0.6
+FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]  0.5779  0.5963              9
+LR [W_RECENT]                                      0.5596  0.5745              7
+B_hist                                             0.5416  0.5456              4
+B_recent7d                                         0.5046  0.5123              1
+
+== POST-HOC 2: mean p on positive onset rows (higher = model saw it coming)
+              FINAL LGBM(leaves=15,lr=0.05,mcs=1000) [W_RECENT]  LR [W_RECENT]  B_hist  B_recent7d  n_positives
+clean                                                    0.3671         0.3712  0.2752      0.4769         3108
+naive/capped                                             0.1882         0.1816  0.1527      0.2898          343
+saved tables to reports/ and figures to reports/figures/
