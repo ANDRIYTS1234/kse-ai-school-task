@@ -141,6 +141,41 @@ pd.DataFrame(rows)""")
 md("""Official data shows only many short alerts (≤ 1.6 h) inside these windows, or none at all. These are
 **missed end signals not flagged as `naive`** — they must be treated as data errors in Step 2.""")
 
+md("""### 5c. Choosing the cap threshold (alerts of 6 h and longer)
+
+For each volunteer alert ≥ 6 h (inside the official data period) we compute `off_cover`: the share of the
+alert window covered by the **union** of official alerts (any level) in the same oblast. Raion-level alerts can
+chain, so a single-alert comparison would undercount. `off_cover ≈ 1` → genuine long alert; `≈ 0` → missed end.""")
+code("""def union_cover(region: str, s: pd.Timestamp, e: pd.Timestamp) -> float:
+    w = off[(off.oblast == region) & (off.started_at < e) & (off.finished_at > s)].sort_values("started_at")
+    total, cur_s, cur_e = 0.0, None, None
+    for a, b in zip(w.started_at.clip(lower=s), w.finished_at.clip(upper=e)):
+        if cur_e is None or a > cur_e:
+            if cur_e is not None:
+                total += (cur_e - cur_s).total_seconds()
+            cur_s, cur_e = a, b
+        else:
+            cur_e = max(cur_e, b)
+    if cur_e is not None:
+        total += (cur_e - cur_s).total_seconds()
+    return total / (e - s).total_seconds()
+
+long6 = df[(df.duration_min >= 360) & (df.started_at >= off.started_at.min()) & (df.finished_at <= off.started_at.max())].copy()
+long6["off_cover"] = [union_cover(r.region, r.started_at, r.finished_at) for r in long6.itertuples()]
+long6["bin"] = pd.cut(long6.duration_min / 60, [6, 8, 12, 24, 1e4], right=False, labels=["6-8h", "8-12h", "12-24h", ">=24h"])
+long6.groupby("bin", observed=True).off_cover.agg(
+    n="size", median="median", genuine_share=lambda x: (x >= 0.8).mean(), error_share=lambda x: (x < 0.3).mean()).round(2)""")
+code("""# by region: where do low-cover (likely erroneous) long alerts come from?
+long6.groupby("region").agg(n=("off_cover", "size"), median_cover=("off_cover", "median"),
+                            low_cover=("off_cover", lambda x: (x < 0.3).sum())).sort_values("n", ascending=False).round(2)""")
+code("""long6[long6.duration_min >= 12 * 60].sort_values("started_at")[["region", "started_at", "duration_min", "off_cover"]].round(2)""")
+md("""**Decision: cap at 12 h.** ≥ 24 h: 12/12 errors. 12–24 h: 7/9 errors (the 2 genuine ones are 2022–2023
+front-line alerts in Chernihiv/Kherson oblasts). 6–12 h: 85–90 % genuine (Donetsk, Dnipro… front-line regions), and
+most low-cover cases there come from **Volyn**, which is a separate problem (section 11), not missed ends.
+A lower threshold would destroy genuine front-line alerts; region-specific thresholds would be over-engineering.
+Using official data to correct labels was rejected: it is unavailable for the test period (stale since 2026-09-07),
+so train and test labels would be cleaned differently.""")
+
 md("""## 6. Permanent-alert regions
 
 Regions where the alert is (almost) always on make the target trivially 1 and inflate metrics.
@@ -227,6 +262,38 @@ code("""def agreement(start: str, end: str) -> pd.Series:
 
 pd.DataFrame({"2024-H2 (oblast era)": agreement("2024-07-01", "2025-01-01"),
               "2026-03..08 (raion era)": agreement("2026-03-01", "2026-09-01")}).round(3)""")
+
+md("""## 11. Data-collection anomalies found in Step 2
+
+**11a. Volyn and Lviv diverge from official data.** Monthly per-region agreement (hour level).""")
+code("""def monthly_agreement(region: str, start: str = "2025-06-01", end: str = "2026-09-07") -> pd.DataFrame:
+    v = hourly_cover(df[(df.region == region) & (df.started_at >= start) & (df.started_at < end)]).assign(vol=1)
+    o_ev = off[(off.oblast == region) & (off.started_at >= start) & (off.started_at < end)].rename(columns={"oblast": "region"})
+    o = hourly_cover(o_ev).assign(off=1)
+    j = v.merge(o, on=["region", "hour"], how="outer").fillna(0)
+    j["month"] = j.hour.dt.tz_localize(None).dt.to_period("M")
+    g = j.assign(both=j.vol * j.off).groupby("month")[["vol", "off", "both"]].sum()
+    g["P(off|vol)"] = (g.both / g.vol).round(2)
+    return g.T
+
+for r in ["Volynska oblast", "Lvivska oblast", "Rivnenska oblast"]:
+    print(r); display(monthly_agreement(r))""")
+md("""From Sep 2025 (Volyn) and Nov 2025 (Lviv) the volunteer series records ~5–10x more alert-hours than official
+data, and only ~10 % of them have any official alert. Neighbouring Rivne stays consistent. So the *meaning* of the
+volunteer label for these two oblasts changed (unknown cause: maybe local/raion-level alerts or other alert types
+now posted as oblast alerts). We keep them (target = what volunteers record) but report this as a regime change.""")
+md("""**11b. Rounded timestamps 2026-07-12 .. 2026-09-25.** By chance ~1 % of records have both start and end on a
+multiple of 10 s. In this window, it is 25–100 % for every region — a sign that the upstream collection changed.""")
+code("""r10 = (df.started_at.dt.second % 10 == 0) & (df.finished_at.dt.second % 10 == 0)
+daily = r10.groupby(df.started_at.dt.floor("D")).mean()
+fig, ax = plt.subplots(figsize=(11, 3))
+ax.plot(daily.index, daily.values, lw=0.8)
+ax.set_ylabel("share of round-10s records"); ax.set_title("Collection-regime signature: timestamps rounded to 10 s")
+fig.tight_layout(); fig.savefig(FIGURES_DIR / "eda_round_timestamps.png", dpi=120)
+on = daily[daily > 0.3]
+print("days > 30 %:", len(on), on.index.min().date(), "..", on.index.max().date())""")
+md("""In the same months, overall agreement P(off|vol) drops from ~0.91 to 0.82 (Jul–Aug 2026, section 10 style).
+Implication: label noise is higher right before and inside the evaluation period.""")
 
 nb = nbf.v4.new_notebook()
 nb.cells = [nbf.v4.new_markdown_cell(s) if t == "md" else nbf.v4.new_code_cell(s) for t, s in cells]

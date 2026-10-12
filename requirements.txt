@@ -6,3 +6,4 @@ lightgbm
 jupyter
 ipykernel
 pytest
+pyarrow
