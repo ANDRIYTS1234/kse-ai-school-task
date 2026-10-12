@@ -1,20 +1,42 @@
-"""Download or update the raw air-raid-sirens dataset (shallow git clone)."""
+"""Get the raw air-raid-sirens dataset, pinned to a fixed source commit by default.
+
+A shallow clone cannot check out an arbitrary commit, so the pinned commit is fetched explicitly
+(`git fetch --depth 1 origin <sha>`; GitHub allows fetching reachable commits by SHA).
+
+Run: python -m src.fetch            # pinned snapshot (SOURCE_COMMIT) -> reproduces the reported results
+     python -m src.fetch --latest   # newest data from the default branch
+"""
+import argparse
 import subprocess
 
-from src.config import SOURCE_DATASETS_DIR, SOURCE_DIR, SOURCE_REPO_URL
+from src.config import SOURCE_BRANCH, SOURCE_COMMIT, SOURCE_DATASETS_DIR, SOURCE_DIR, SOURCE_REPO_URL
 
 
-def fetch_dataset() -> None:
-    """Shallow-clone the source repo, or pull the latest commit if it already exists."""
-    if (SOURCE_DIR / ".git").exists():
-        print(f"Updating {SOURCE_DIR} ...")
-        subprocess.run(["git", "-C", str(SOURCE_DIR), "pull", "--ff-only"], check=True)
-    else:
-        print(f"Cloning {SOURCE_REPO_URL} -> {SOURCE_DIR} ...")
-        SOURCE_DIR.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            ["git", "clone", "--depth", "1", SOURCE_REPO_URL, str(SOURCE_DIR)], check=True
-        )
+def _git(*args: str) -> str:
+    out = subprocess.run(["git", "-C", str(SOURCE_DIR), *args], check=True, capture_output=True, text=True)
+    return out.stdout.strip()
+
+
+def fetch_dataset(latest: bool = False) -> str:
+    """Make SOURCE_DIR a (shallow) checkout of SOURCE_COMMIT, or of the newest commit if `latest`.
+
+    Returns the checked-out commit hash.
+    """
+    if not (SOURCE_DIR / ".git").exists():
+        print(f"Initialising {SOURCE_DIR} (origin {SOURCE_REPO_URL})")
+        SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+        _git("init", "-q")
+        _git("remote", "add", "origin", SOURCE_REPO_URL)
+    target = SOURCE_BRANCH if latest else SOURCE_COMMIT
+    print(f"Fetching {'latest ' + SOURCE_BRANCH if latest else 'pinned commit ' + SOURCE_COMMIT[:7]} ...")
+    _git("fetch", "-q", "--depth", "1", "origin", target)
+    _git("checkout", "-q", "--detach", "FETCH_HEAD")
+    head = _git("rev-parse", "HEAD")
+    date = _git("log", "-1", "--format=%cI")
+    print(f"Source at {head[:7]} ({date})" + ("" if latest or head == SOURCE_COMMIT else "  WARNING: not the pinned commit"))
+    if latest and head != SOURCE_COMMIT:
+        print("NOTE: newer than the pinned snapshot; results will differ from README/reports.")
+    return head
 
 
 def count_rows(path) -> int:
@@ -34,5 +56,7 @@ def describe_datasets() -> None:
 
 
 if __name__ == "__main__":
-    fetch_dataset()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--latest", action="store_true", help="fetch the newest data instead of the pinned snapshot")
+    fetch_dataset(latest=parser.parse_args().latest)
     describe_datasets()

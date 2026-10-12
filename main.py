@@ -3,7 +3,8 @@
 Usage:
     python main.py                  # everything, including the walk-forward search (~15 min)
     python main.py --skip-search    # reuse reports/selected_config.json (~2 min after fetch)
-    python main.py --skip-fetch     # do not clone/pull the source dataset
+    python main.py --skip-fetch     # do not touch data/raw (use what is there)
+    python main.py --latest         # fetch the newest source data instead of the pinned snapshot
 """
 import argparse
 import time
@@ -21,13 +22,14 @@ def run_stage(name: str, fn: Callable[[], None]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--skip-fetch", action="store_true", help="do not clone/pull the source dataset")
+    parser.add_argument("--skip-fetch", action="store_true", help="do not touch data/raw (use what is there)")
+    parser.add_argument("--latest", action="store_true", help="fetch the newest source data instead of the pinned snapshot")
     parser.add_argument("--skip-search", action="store_true", help="reuse reports/selected_config.json")
     args = parser.parse_args()
 
     t0 = time.perf_counter()
     if not args.skip_fetch:
-        run_stage("1. fetch dataset", lambda: (fetch.fetch_dataset(), fetch.describe_datasets()))
+        run_stage("1. fetch dataset", lambda: (fetch.fetch_dataset(latest=args.latest), fetch.describe_datasets()))
     run_stage("2. preprocess: clean alerts -> hourly panel", preprocess.main)
     run_stage("3. features (past-only)", features.main)
     if not args.skip_search:

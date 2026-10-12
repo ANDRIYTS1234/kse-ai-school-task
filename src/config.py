@@ -10,6 +10,9 @@ PROCESSED_DIR: Path = DATA_DIR / "processed"
 FIGURES_DIR: Path = ROOT_DIR / "reports" / "figures"
 
 SOURCE_REPO_URL: str = "https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset"
+# Pinned data snapshot used for all reported results (source commit of 2026-10-12 05:05 UTC).
+SOURCE_COMMIT: str = "d10c80fa696bab42822b9f05b423fc8a30e79d20"
+SOURCE_BRANCH: str = "main"
 SOURCE_DIR: Path = RAW_DIR / "ukrainian-air-raid-sirens-dataset"
 SOURCE_DATASETS_DIR: Path = SOURCE_DIR / "datasets"
 VOLUNTEER_CSV: Path = SOURCE_DATASETS_DIR / "volunteer_data_en.csv"
